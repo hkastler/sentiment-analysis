@@ -19,6 +19,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,9 +34,23 @@ public class Config {
         super();
         init();
     }
+    
+    public Config(Path filepath) {
+       super();
+       loadPropsCustom(filepath);
+    }
 
     public Config(Properties props) {
+        super();
         this.props = props;
+    }
+    
+    private void loadPropsCustom(Path filepath){
+        try {
+            props.load(new FileInputStream(filepath.toFile()));
+        } catch (IOException ex) {
+            log.log(Level.SEVERE, null, ex);
+        }
     }
 
     void init() {
@@ -47,7 +63,8 @@ public class Config {
             is.close();
         } catch (FileNotFoundException ne) {
             try {
-                props.load(this.getClass().getClassLoader().getResourceAsStream("app.properties"));
+                Path appPropsPath = Paths.get("src", "main", "resources", "app.properties");
+                props.load(new FileInputStream(appPropsPath.toFile()));
             } catch (IOException e) {
                 log.log(Level.SEVERE, null, e);
             }

@@ -14,6 +14,7 @@
  */
 package com.hkstlr.sentiment.control;
 
+import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,15 +26,17 @@ import static org.junit.Assert.*;
  */
 public class ConfigTest {
     
+    Config cut;
+    
     public ConfigTest() {
     }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
+
     
     @Before
     public void setUp() {
+        
+       cut = new Config();
+       
     }
 
     /**
@@ -41,6 +44,12 @@ public class ConfigTest {
      */
     @Test
     public void testInit() {
+        cut.init();
+        System.out.println("props.size:" + cut.getProps().size());
+        String oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", "not in props");
+        System.out.println(oAuthTest);
+        assertFalse(oAuthTest.equals("not in props"));
+        //assertTrue(oAuthTest.equals(""));
     }
 
     /**
@@ -48,6 +57,19 @@ public class ConfigTest {
      */
     @Test
     public void testGetProps() {
+         assertNotNull(cut.getProps());
     }
     
+    
+    /**
+     * Test of init method, of class Config.
+     */
+    @Test
+    public void testLoadPropsCustom() {
+        cut = new Config(Paths.get("src", "test", "resources", "app.properties"));
+        System.out.println("props.size:" + cut.getProps().size());
+        String oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", "not in props");
+        assertTrue(oAuthTest.equals("test"));
+        //assertTrue(oAuthTest.equals(""));
+    }
 }
