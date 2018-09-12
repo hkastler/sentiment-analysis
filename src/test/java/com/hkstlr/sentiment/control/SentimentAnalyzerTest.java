@@ -14,26 +14,34 @@
  */
 package com.hkstlr.sentiment.control;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import opennlp.tools.util.InputStreamFactory;
 
 /**
  *
  * @author henry.kastler
  */
 public class SentimentAnalyzerTest {
+	
+	SentimentAnalyzer cut;
     
     public SentimentAnalyzerTest() {
     }
     
-    @BeforeClass
-    public static void setUpClass() {
-    }
     
     @Before
     public void setUp() {
+    	cut = new SentimentAnalyzer();
+    	
     }
 
     /**
@@ -41,13 +49,7 @@ public class SentimentAnalyzerTest {
      */
     @Test
     public void testTrainModel() {
-    }
-
-    /**
-     * Test of classify method, of class SentimentAnalyzer.
-     */
-    @Test
-    public void testClassify() throws Exception {
+    	assertNotNull(cut.getModel());
     }
 
     /**
@@ -55,27 +57,73 @@ public class SentimentAnalyzerTest {
      */
     @Test
     public void testGetModel() {
+    	assertNotNull(cut.getModel());
     }
 
-    /**
-     * Test of setModel method, of class SentimentAnalyzer.
-     */
-    @Test
-    public void testSetModel() {
-    }
-
+    
     /**
      * Test of getDoccat method, of class SentimentAnalyzer.
      */
     @Test
     public void testGetDoccat() {
+    	assertNotNull(cut.getDoccat());
     }
 
     /**
-     * Test of setDoccat method, of class SentimentAnalyzer.
+     * Test of getTrainingData method, of class SentimentAnalyzer.
      */
     @Test
-    public void testSetDoccat() {
+    public void testGetTrainingData() {
+        System.out.println("getTrainingData");
+        InputStreamFactory result = cut.getTrainingData();
+        assertNotNull(result);
+        
+        Path testPath = Paths.get("src", "test", "resources", 
+          		"test_twitter_sentiment_training_data.train");
+    	cut = new SentimentAnalyzer(testPath.toString());
+    	result = cut.getTrainingData();
+        assertNotNull(result);
     }
+
+    /**
+     * Test of categorize method, of class SentimentAnalyzer.
+     */
+    @Test
+    public void testCategorize() throws Exception {
+        System.out.println("categorize");
+        
+        String str = "good";
+        int expResult = 1;
+        int result = cut.categorize(str);
+        assertEquals(expResult, result);
+        
+        str = "bad";
+        expResult = 0;
+        result = cut.categorize(str);
+        assertEquals(expResult, result);
+        
+    }
+
+
+    /**
+     * Test of getTrainingDataFile method, of class SentimentAnalyzer.
+     */
+    @Test
+    public void testGetTrainingDataFile() {
+        System.out.println("getTrainingDataFile");
+       
+        String result = cut.getTrainingDataFile();
+        assertNull( result);
+        
+        Path testPath = Paths.get("src", "test", "resources", 
+          		"test_twitter_sentiment_training_data.train");
+    	cut = new SentimentAnalyzer(testPath.toString());
+    	result = cut.getTrainingDataFile();
+        assertEquals(testPath.toString(),result);
+        
+    }
+
+    
+    
     
 }

@@ -14,12 +14,11 @@
  */
 package com.hkstlr.sentiment.control;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,11 +37,17 @@ public class SentimentAnalyzer {
 
     private DoccatModel model;
     private DocumentCategorizerME doccat;
+    private String trainingDataFile;
     Logger log = Logger.getLogger(this.getClass().getName());
 
     public SentimentAnalyzer() {
         super();
         init();
+    }
+    
+    public SentimentAnalyzer(String trainingDataFile) {
+    	this.trainingDataFile = trainingDataFile;
+    	init();
     }
 
     private void init() {
@@ -50,39 +55,62 @@ public class SentimentAnalyzer {
 
     }
 
-    public void trainModel() {
+    public InputStreamFactory getTrainingData() {
+    	
+    	  InputStreamFactory tdata = null;
+          Optional<String> tdataCustomFile = Optional.ofNullable(trainingDataFile);
+          if (tdataCustomFile.isPresent() && !tdataCustomFile.get().isEmpty()){
+          	 try {
+  				tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get())
+  				         .toFile());
+  				
+  			} catch (FileNotFoundException e) {
+  				log.log(Level.SEVERE, null, e);
+  			}
+          	return tdata; 
+          }           
 
-        InputStreamFactory tdata = null;
+          try {
+          	
+              tdata = new MarkableFileInputStreamFactory(Paths.get(
+                      "/etc/config/twitter_sentiment_training_data.train")
+                      .toFile());
 
-        try {
+          } catch (FileNotFoundException ne) {
+                         
+              try {
+              	
+                  tdata = new MarkableFileInputStreamFactory(Paths.get("src", "main", "resources", 
+                  		"twitter_sentiment_training_data.train")
+                  		.toFile());
+                  
+              } catch (FileNotFoundException e) {
+                  log.log(Level.SEVERE, null, e);
+              }
+          } catch (Exception e) {
 
-            tdata = new MarkableFileInputStreamFactory(new File("/etc/config/twitter_sentiment_training_data.train"));
+              log.log(Level.SEVERE, null, e);
+          }
+          return tdata;
+    }
+    
+	public void trainModel() {
 
-        } catch (FileNotFoundException ne) {
-            Path trainingPath = Paths.get("src", "main", "resources", "twitter_sentiment_training_data.train");
-            try {
-                tdata = new MarkableFileInputStreamFactory(trainingPath.toFile());
-            } catch (FileNotFoundException e) {
-                log.log(Level.SEVERE, null, e);
-            }
-        } catch (Exception e) {
+       try {
 
-            log.log(Level.SEVERE, null, e);
-        }
-        try {
-
-            ObjectStream<String> lineStream = new PlainTextByLineStream(tdata, StandardCharsets.UTF_8);
+            ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), 
+            		StandardCharsets.UTF_8);
             ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
 
             TrainingParameters params = new TrainingParameters();
             params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
             params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
-
+           
             model = DocumentCategorizerME.train("en", sampleStream, params, new DoccatFactory());
             doccat = new DocumentCategorizerME(model);
 
         } catch (IOException e) {
-            e.printStackTrace();
+           log.log(Level.SEVERE, null, e);
         }
     }
 
@@ -92,12 +120,11 @@ public class SentimentAnalyzer {
         String category = doccat.getBestCategory(aProbs);
 
         if (category.equalsIgnoreCase("1")) {
-            System.out.println(" POSITIVE " + Double.toString(aProbs[0]) + " " + Double.toString(aProbs[1]));
-            System.out.print("TWEET:" + str + "\n");
+            log.log(Level.INFO, "{0} {1} TWEET:{2}\n", new Object[]{"POSITIVE",Double.toString(aProbs[0]), str});
+            
             return 1;
         } else {
-            System.out.println(" NEGATIVE " + Double.toString(aProbs[0]) + " " + Double.toString(aProbs[1]));
-            System.out.print(" TWEET:" + str + "\n");
+            log.log(Level.INFO, "{0} {1} TWEET:{2}\n", new Object[]{"NEGATIVE",Double.toString(aProbs[0]), str});
             return 0;
         }
 
@@ -118,5 +145,19 @@ public class SentimentAnalyzer {
     public void setDoccat(DocumentCategorizerME myCategorizer) {
         this.doccat = myCategorizer;
     }
+
+	/**
+	 * @return the trainingDataFile
+	 */
+	public String getTrainingDataFile() {
+		return trainingDataFile;
+	}
+
+	/**
+	 * @param trainingDataFile the trainingDataFile to set
+	 */
+	public void setTrainingDataFile(String trainingDataFile) {
+		this.trainingDataFile = trainingDataFile;
+	}
 
 }
