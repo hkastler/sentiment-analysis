@@ -19,8 +19,9 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.hkstlr.sentiment.control.Config;
 import com.hkstlr.sentiment.control.SentimentAnalyzer;
-import com.hkstlr.sentiment.control.twitter.TwitterClient;
+import com.hkstlr.twitter.control.TwitterClient;
 
 import twitter4j.Query;
 import twitter4j.QueryResult;
@@ -43,10 +44,10 @@ public class TweetAnalysisCount {
     private static Level logLevel = Level.INFO;
     
     public static void main(String[] args) throws IOException, TwitterException {
-
+    	    	
         SentimentAnalyzer sa = new SentimentAnalyzer();
-
-        Twitter twitter = new TwitterClient().getTwitter();
+        Config config = new Config();
+        Twitter twitter = new TwitterClient().getTwitter(config.getProps());
         
         String queryTerms = "chicago pizza";
         
@@ -64,20 +65,20 @@ public class TweetAnalysisCount {
         String msgTemplate = "{0} {1} TWEET:{2}\n";
         
         String tresult = "0";
+       
         for (Status tweet : tweets.getTweets()) {
-            //String[] tokens = tweet.getText().split(" ");//WhitespaceTokenizer.INSTANCE.tokenize(tweet.getText());
-            //double[] outcome = sa.getDoccat().categorize(tokens);
-            //tresult = sa.getDoccat().getBestCategory(outcome);
+            
             Object[] outcomeAndtresult = sa.getCategorizeAndBestCategory(tweet.getText());
             double[] outcome = (double[]) outcomeAndtresult[0];
             tresult = (String) outcomeAndtresult[1];
-            if (tresult.equals("1")) {
+            if ("1".equals(tresult)) {
                 positive++;
             } else {
                 negative++;
             }
             log.log(logLevel, msgTemplate , new Object[]
-            		{tresult.equals("1") ? "POSITIVE":"NEGATIVE",Arrays.toString(outcome), tweet.getText() });
+            		{"1".equals(tresult) ? "POSITIVE":"NEGATIVE",
+            				Arrays.toString(outcome), tweet.getText() });
         }
 
         String pt = "Positive Tweets," + positive + "\n";
@@ -85,6 +86,7 @@ public class TweetAnalysisCount {
         String nt = "Negative Tweets," + negative;
 
         log.info(pt + nt);
+        
     }
 
 }
