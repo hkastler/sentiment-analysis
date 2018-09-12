@@ -18,8 +18,8 @@ public class TwitterClient {
         .setOAuthAccessToken(config.getProps().getProperty("oAuthAccessToken"))
         .setOAuthAccessTokenSecret(config.getProps().getProperty("oAuthAccessTokenSecret"));	    
 	    
-	    Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-	    return twitter;
+	    
+	    return new TwitterFactory(cb.build()).getInstance();
 	}
 	
 
