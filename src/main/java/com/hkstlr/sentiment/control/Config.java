@@ -27,55 +27,58 @@ import java.util.logging.Logger;
 
 public class Config {
 
-    private Properties props = new Properties();
-    private Logger log = Logger.getLogger(this.getClass().getName());
+	private Properties props = new Properties();
+	private Logger log = Logger.getLogger(this.getClass().getName());
 
-    public Config() {
-        super();
-        init();
-    }
-    
-    public Config(Path filepath) {
-       super();
-       loadPropsCustom(filepath);
-    }
+	public Config() {
+		super();
+		init();
+	}
 
-    public Config(Properties props) {
-        super();
-        this.props = props;
-    }
-    
-    private void loadPropsCustom(Path filepath){
-        try {
-            props.load(new FileInputStream(filepath.toFile()));
-        } catch (IOException ex) {
-            log.log(Level.SEVERE, null, ex);
-        }
-    }
+	public Config(Path filepath) {
+		super();
+		try {
+			loadPropsCustom(filepath);
+		} catch (Exception e) {
+			init();
+			log.log(Level.SEVERE, "filepath error", e);
+		}
+	}
 
-    void init() {
+	public Config(Properties props) {
+		super();
+		this.props = props;
+	}
 
-        try {
+	private void loadPropsCustom(Path filepath) throws FileNotFoundException, IOException {
 
-            InputStream is = null;
-            is = new FileInputStream(new File("/etc/config/twitter_sentiment_app_properties"));
-            props.load(is);
-            is.close();
-        } catch (FileNotFoundException ne) {
-            try {
-                Path appPropsPath = Paths.get("src", "main", "resources", "app.properties");
-                props.load(new FileInputStream(appPropsPath.toFile()));
-            } catch (IOException e) {
-                log.log(Level.SEVERE, null, e);
-            }
-        } catch (Exception e) {
-            log.log(Level.SEVERE, null, e);
-        }
+		props.load(new FileInputStream(filepath.toFile()));
 
-    }
+	}
 
-    public Properties getProps() {
-        return props;
-    }
+	void init() {
+
+		try {
+
+			InputStream is = null;
+			is = new FileInputStream(new File("/etc/config/twitter_sentiment_app_properties"));
+			props.load(is);
+			is.close();
+		} catch (FileNotFoundException ne) {
+			try {
+				Path appPropsPath = Paths.get("src", "main", "resources", "app.properties");
+				props.load(new FileInputStream(appPropsPath.toFile()));
+			} catch (IOException e) {
+				log.log(Level.SEVERE, null, e);
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, null, e);
+		}
+
+	}
+
+	public Properties getProps() {
+		return props;
+	}
 
 }
