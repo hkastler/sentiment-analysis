@@ -11,6 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
+ * see https://github.com/technobium/opennlp-categorizer
+ * 
  */
 package com.hkstlr.sentiment.control;
 
@@ -18,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +42,7 @@ public class SentimentAnalyzer {
     private DocumentCategorizerME doccat;
     private String trainingDataFile;
     Logger log = Logger.getLogger(this.getClass().getName());
+    
 
     public SentimentAnalyzer() {
         super();
@@ -95,7 +99,7 @@ public class SentimentAnalyzer {
     }
     
 	public void trainModel() {
-
+		
        try {
 
             ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), 
@@ -106,28 +110,13 @@ public class SentimentAnalyzer {
             params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
             params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
            
-            model = DocumentCategorizerME.train("en", sampleStream, params, new DoccatFactory());
+            model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), 
+            		sampleStream, params, new DoccatFactory());
             doccat = new DocumentCategorizerME(model);
 
         } catch (IOException e) {
            log.log(Level.SEVERE, null, e);
         }
-    }
-
-    public int categorize(String str) throws IOException {
-
-        double[] aProbs = doccat.categorize(str.split(" "));
-        String category = doccat.getBestCategory(aProbs);
-
-        if (category.equalsIgnoreCase("1")) {
-            log.log(Level.INFO, "{0} {1} TWEET:{2}\n", new Object[]{"POSITIVE",Double.toString(aProbs[0]), str});
-            
-            return 1;
-        } else {
-            log.log(Level.INFO, "{0} {1} TWEET:{2}\n", new Object[]{"NEGATIVE",Double.toString(aProbs[0]), str});
-            return 0;
-        }
-
     }
 
     public DoccatModel getModel() {
@@ -142,8 +131,8 @@ public class SentimentAnalyzer {
         return doccat;
     }
 
-    public void setDoccat(DocumentCategorizerME myCategorizer) {
-        this.doccat = myCategorizer;
+    public void setDoccat(DocumentCategorizerME doccat) {
+        this.doccat = doccat;
     }
 
 	/**
