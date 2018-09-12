@@ -15,10 +15,13 @@
 package com.hkstlr.sentiment.boundary.twitter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import com.hkstlr.sentiment.control.Config;
 import com.hkstlr.sentiment.control.SentimentAnalyzer;
+import com.hkstlr.sentiment.control.twitter.TwitterClient;
 
 import twitter4j.Query;
 import twitter4j.QueryResult;
@@ -44,25 +47,24 @@ public class TweetAnalysisCount {
 
         SentimentAnalyzer sa = new SentimentAnalyzer();
 
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        Config config = new Config();
-
-        cb.setDebugEnabled(false).setOAuthConsumerKey(config.getProps().getProperty("oAuthConsumerKey"))
-                .setOAuthConsumerSecret(config.getProps().getProperty("oAuthConsumerSecret"))
-                .setOAuthAccessToken(config.getProps().getProperty("oAuthAccessToken"))
-                .setOAuthAccessTokenSecret(config.getProps().getProperty("oAuthAccessTokenSecret"));
-        TwitterFactory tf = new TwitterFactory(cb.build());
-        Twitter twitter = tf.getInstance();
-
-        String queryTerms = "chicago mayor rahm";
+        Twitter twitter = new TwitterClient().getTwitter();
+        
+        String queryTerms = "chicago pizza";
+        
+        if(args.length > 0) {
+        	queryTerms = Arrays.toString(args);
+        }
+        
         queryTerms += " +exclude:retweets";
+        
         Query query = new Query(queryTerms);
         query.setCount(100);
-        QueryResult result = twitter.search(query);
+        
+        QueryResult tweets = twitter.search(query);
 
         int tresult = 0;
-        for (Status status : result.getTweets()) {
-            tresult = sa.categorize(status.getText());
+        for (Status tweet : tweets.getTweets()) {
+            tresult = sa.categorize(tweet.getText());
             if (tresult == 1) {
                 positive++;
             } else {
