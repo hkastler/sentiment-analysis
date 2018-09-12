@@ -22,8 +22,6 @@ import java.util.logging.Logger;
 import com.hkstlr.sentiment.control.SentimentAnalyzer;
 import com.hkstlr.sentiment.control.twitter.TwitterClient;
 
-import opennlp.tools.tokenize.Tokenizer;
-import opennlp.tools.tokenize.WhitespaceTokenizer;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Status;
@@ -67,9 +65,12 @@ public class TweetAnalysisCount {
         
         String tresult = "0";
         for (Status tweet : tweets.getTweets()) {
-            String[] tokens = tweet.getText().split(" ");//WhitespaceTokenizer.INSTANCE.tokenize(tweet.getText());
-            double[] outcome = sa.getDoccat().categorize(tokens);
-            tresult = sa.getDoccat().getBestCategory(outcome);
+            //String[] tokens = tweet.getText().split(" ");//WhitespaceTokenizer.INSTANCE.tokenize(tweet.getText());
+            //double[] outcome = sa.getDoccat().categorize(tokens);
+            //tresult = sa.getDoccat().getBestCategory(outcome);
+            Object[] outcomeAndtresult = sa.getCategorizeAndBestCategory(tweet.getText());
+            double[] outcome = (double[]) outcomeAndtresult[0];
+            tresult = (String) outcomeAndtresult[1];
             if (tresult.equals("1")) {
                 positive++;
             } else {

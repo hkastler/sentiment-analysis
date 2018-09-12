@@ -38,102 +38,112 @@ import opennlp.tools.util.TrainingParameters;
 
 public class SentimentAnalyzer {
 
-    private DoccatModel model;
-    private DocumentCategorizerME doccat;
-    private String trainingDataFile;
-    Logger log = Logger.getLogger(this.getClass().getName());
-    
+	private DoccatModel model;
+	private DocumentCategorizerME doccat;
+	private String trainingDataFile;
+	Logger log = Logger.getLogger(this.getClass().getName());
 
-    public SentimentAnalyzer() {
-        super();
-        init();
-    }
-    
-    public SentimentAnalyzer(String trainingDataFile) {
-    	this.trainingDataFile = trainingDataFile;
-    	init();
-    }
+	public SentimentAnalyzer() {
+		super();
+		init();
+	}
 
-    private void init() {
-        trainModel();
+	public SentimentAnalyzer(String trainingDataFile) {
+		this.trainingDataFile = trainingDataFile;
+		init();
+	}
 
-    }
+	private void init() {
+		trainModel();
 
-    public InputStreamFactory getTrainingData() {
-    	
-    	  InputStreamFactory tdata = null;
-          Optional<String> tdataCustomFile = Optional.ofNullable(trainingDataFile);
-          if (tdataCustomFile.isPresent() && !tdataCustomFile.get().isEmpty()){
-          	 try {
-  				tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get())
-  				         .toFile());
-  				
-  			} catch (FileNotFoundException e) {
-  				log.log(Level.SEVERE, null, e);
-  			}
-          	return tdata; 
-          }           
+	}
 
-          try {
-          	
-              tdata = new MarkableFileInputStreamFactory(Paths.get(
-                      "/etc/config/twitter_sentiment_training_data.train")
-                      .toFile());
+	public InputStreamFactory getTrainingData() {
 
-          } catch (FileNotFoundException ne) {
-                         
-              try {
-              	
-                  tdata = new MarkableFileInputStreamFactory(Paths.get("src", "main", "resources", 
-                  		"twitter_sentiment_training_data.train")
-                  		.toFile());
-                  
-              } catch (FileNotFoundException e) {
-                  log.log(Level.SEVERE, null, e);
-              }
-          } catch (Exception e) {
+		InputStreamFactory tdata = null;
+		Optional<String> tdataCustomFile = Optional.ofNullable(trainingDataFile);
+		if (tdataCustomFile.isPresent() && !tdataCustomFile.get().isEmpty()) {
+			try {
+				tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get()).toFile());
 
-              log.log(Level.SEVERE, null, e);
-          }
-          return tdata;
-    }
-    
+			} catch (FileNotFoundException e) {
+				log.log(Level.SEVERE, null, e);
+			}
+			return tdata;
+		}
+
+		try {
+
+			tdata = new MarkableFileInputStreamFactory(
+					Paths.get("/etc/config/twitter_sentiment_training_data.train").toFile());
+
+		} catch (FileNotFoundException ne) {
+
+			try {
+
+				tdata = new MarkableFileInputStreamFactory(
+						Paths.get("src", "main", "resources", "twitter_sentiment_training_data.train").toFile());
+
+			} catch (FileNotFoundException e) {
+				log.log(Level.SEVERE, null, e);
+			}
+		} catch (Exception e) {
+
+			log.log(Level.SEVERE, null, e);
+		}
+		return tdata;
+	}
+
 	public void trainModel() {
+
+		try {
+
+			ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), StandardCharsets.UTF_8);
+			ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
+
+			TrainingParameters params = new TrainingParameters();
+			params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
+			params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
+
+			model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, params,
+					new DoccatFactory());
+			doccat = new DocumentCategorizerME(model);
+
+		} catch (IOException e) {
+			log.log(Level.SEVERE, null, e);
+		}
+	}
+
+	public String getBestCategory(String str) {
+		double[] outcome = doccat.categorize(str.split(" "));
 		
-       try {
+		return doccat.getBestCategory(outcome);
+	}
+	
+	public Object[] getCategorizeAndBestCategory(String str) {
+		Object[] returnObj = new Object[2];
+						
+		returnObj[0] = doccat.categorize(str.split(" "));		
+		returnObj[1] = doccat.getBestCategory((double[]) returnObj[0]);
+		
+		return returnObj;
+	}
 
-            ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), 
-            		StandardCharsets.UTF_8);
-            ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
+	public DoccatModel getModel() {
+		return model;
+	}
 
-            TrainingParameters params = new TrainingParameters();
-            params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
-            params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
-           
-            model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), 
-            		sampleStream, params, new DoccatFactory());
-            doccat = new DocumentCategorizerME(model);
+	public void setModel(DoccatModel model) {
+		this.model = model;
+	}
 
-        } catch (IOException e) {
-           log.log(Level.SEVERE, null, e);
-        }
-    }
+	public DocumentCategorizerME getDoccat() {
+		return doccat;
+	}
 
-    public DoccatModel getModel() {
-        return model;
-    }
-
-    public void setModel(DoccatModel model) {
-        this.model = model;
-    }
-
-    public DocumentCategorizerME getDoccat() {
-        return doccat;
-    }
-
-    public void setDoccat(DocumentCategorizerME doccat) {
-        this.doccat = doccat;
-    }
+	public void setDoccat(DocumentCategorizerME doccat) {
+		this.doccat = doccat;
+	}
 
 	/**
 	 * @return the trainingDataFile
@@ -143,7 +153,8 @@ public class SentimentAnalyzer {
 	}
 
 	/**
-	 * @param trainingDataFile the trainingDataFile to set
+	 * @param trainingDataFile
+	 *            the trainingDataFile to set
 	 */
 	public void setTrainingDataFile(String trainingDataFile) {
 		this.trainingDataFile = trainingDataFile;

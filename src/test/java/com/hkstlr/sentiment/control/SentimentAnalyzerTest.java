@@ -93,15 +93,22 @@ public class SentimentAnalyzerTest {
         System.out.println("categorize");
         
         String str = "good";
-        int expResult = 1;
-        int result = cut.categorize(str);
+        String expResult = "1";
+        double[] outcome = cut.getDoccat().categorize(str.split(" "));
+        String result = cut.getDoccat().getBestCategory(outcome);
+        assertEquals(expResult, result);
+        
+        result = cut.getBestCategory(str);
         assertEquals(expResult, result);
         
         str = "bad";
-        expResult = 0;
-        result = cut.categorize(str);
+        expResult = "0";
+        outcome = cut.getDoccat().categorize(str.split(" "));
+        result = cut.getDoccat().getBestCategory(outcome);
         assertEquals(expResult, result);
         
+        result = cut.getBestCategory(str);
+        assertEquals(expResult, result);
     }
 
 
