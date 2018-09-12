@@ -113,17 +113,22 @@ public class SentimentAnalyzer {
 			log.log(Level.SEVERE, null, e);
 		}
 	}
+	
+	public double[] getCategorize(String str) {
+			
+		return doccat.categorize(opennlp.tools.tokenize
+				.WhitespaceTokenizer.INSTANCE.tokenize(str));
+	}
 
 	public String getBestCategory(String str) {
-		double[] outcome = doccat.categorize(str.split(" "));
-		
-		return doccat.getBestCategory(outcome);
+				
+		return doccat.getBestCategory(getCategorize(str));
 	}
 	
 	public Object[] getCategorizeAndBestCategory(String str) {
 		Object[] returnObj = new Object[2];
 						
-		returnObj[0] = doccat.categorize(str.split(" "));		
+		returnObj[0] = getCategorize(str);		
 		returnObj[1] = doccat.getBestCategory((double[]) returnObj[0]);
 		
 		return returnObj;
