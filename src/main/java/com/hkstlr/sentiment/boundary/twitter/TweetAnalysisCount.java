@@ -30,8 +30,8 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
 /**
- * @author milind
- * see https://milindjagre.co/2016/08/26/twitter-sentiment-analysis-using-opennlp-java-api/
+ * @author milind see
+ * https://milindjagre.co/2016/08/26/twitter-sentiment-analysis-using-opennlp-java-api/
  * see also https://github.com/technobium/opennlp-categorizer
  * @author henry.kastler
  */
@@ -40,34 +40,34 @@ public class TweetAnalysisCount {
     static int positive = 0;
     static int negative = 0;
 
-    private static Logger log = Logger.getLogger(TweetAnalysisCount.class.getName());
-    private static Level logLevel = Level.FINE;
-    
+    private static final Logger LOG = Logger.getLogger(TweetAnalysisCount.class.getName());
+    private static final Level LOG_LEVEL = Level.INFO;
+
     public static void main(String[] args) throws IOException, TwitterException {
-    	    	
+
         SentimentAnalyzer sa = new SentimentAnalyzer();
         Config config = new Config();
         Twitter twitter = new TwitterClient().getTwitter(config.getProps());
-        
+
         String queryTerms = "chicago scooters ";
-        
-        if(args.length > 0) {
-        	queryTerms = Arrays.toString(args);
+
+        if (args.length > 0) {
+            queryTerms = Arrays.toString(args);
         }
-        
+
         queryTerms += " +exclude:retweets";
-        
+
         Query query = new Query(queryTerms);
         query.setCount(100);
-        
+
         QueryResult tweets = twitter.search(query);
 
         String msgTemplate = "{0} {1} TWEET:{2}\n";
-        
-        String tresult = "0";
-       
+
+        String tresult;
+
         for (Status tweet : tweets.getTweets()) {
-            
+
             Object[] outcomeAndtresult = sa.getCategorizeAndBestCategory(tweet.getText());
             double[] outcome = (double[]) outcomeAndtresult[0];
             tresult = (String) outcomeAndtresult[1];
@@ -76,17 +76,16 @@ public class TweetAnalysisCount {
             } else {
                 negative++;
             }
-            log.log(logLevel, msgTemplate , new Object[]
-            		{"1".equals(tresult) ? "POSITIVE":"NEGATIVE",
-            				Arrays.toString(outcome), tweet.getText() });
+            LOG.log(LOG_LEVEL, msgTemplate, new Object[]{"1".equals(tresult) ? "POSITIVE" : "NEGATIVE",
+                Arrays.toString(outcome), tweet.getText()});
         }
 
         String pt = "Positive Tweets," + positive + "\n";
 
         String nt = "Negative Tweets," + negative;
 
-        log.info(pt + nt);
-        
+        LOG.log(LOG_LEVEL, "{0}{1}", new Object[]{pt, nt});
+
     }
 
 }
