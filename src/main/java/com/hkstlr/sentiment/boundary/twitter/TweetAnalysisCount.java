@@ -19,8 +19,8 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.hkstlr.sentiment.control.Config;
 import com.hkstlr.sentiment.control.SentimentAnalyzer;
+import com.hkstlr.twitter.control.Config;
 import com.hkstlr.twitter.control.TwitterClient;
 
 import twitter4j.Query;
@@ -41,7 +41,7 @@ public class TweetAnalysisCount {
     static int negative = 0;
 
     private static Logger log = Logger.getLogger(TweetAnalysisCount.class.getName());
-    private static Level logLevel = Level.INFO;
+    private static Level logLevel = Level.FINE;
     
     public static void main(String[] args) throws IOException, TwitterException {
     	    	
@@ -49,7 +49,7 @@ public class TweetAnalysisCount {
         Config config = new Config();
         Twitter twitter = new TwitterClient().getTwitter(config.getProps());
         
-        String queryTerms = "chicago pizza";
+        String queryTerms = "chicago scooters ";
         
         if(args.length > 0) {
         	queryTerms = Arrays.toString(args);

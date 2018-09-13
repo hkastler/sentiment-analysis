@@ -12,7 +12,7 @@
  * limitations under the License.
  * 
  */
-package com.hkstlr.sentiment.control;
+package com.hkstlr.twitter.control;
 
 import java.io.File;
 import java.io.FileInputStream;
