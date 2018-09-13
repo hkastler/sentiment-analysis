@@ -41,7 +41,7 @@ public class SentimentAnalyzer {
     private DoccatModel model;
     private DocumentCategorizerME doccat;
     private String trainingDataFile;
-    Logger log = Logger.getLogger(this.getClass().getName());
+    static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
 
     public SentimentAnalyzer() {
         super();
@@ -67,7 +67,7 @@ public class SentimentAnalyzer {
                 tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get()).toFile());
 
             } catch (FileNotFoundException e) {
-                log.log(Level.SEVERE, null, e);
+                LOG.log(Level.SEVERE, null, e);
             }
             return tdata;
         }
@@ -85,11 +85,11 @@ public class SentimentAnalyzer {
                         Paths.get("src", "main", "resources", "twitter_sentiment_training_data.train").toFile());
 
             } catch (FileNotFoundException e) {
-                log.log(Level.SEVERE, null, e);
+                LOG.log(Level.SEVERE, null, e);
             }
         } catch (Exception e) {
 
-            log.log(Level.SEVERE, null, e);
+            LOG.log(Level.SEVERE, null, e);
         }
         return tdata;
     }
@@ -110,7 +110,7 @@ public class SentimentAnalyzer {
             doccat = new DocumentCategorizerME(model);
 
         } catch (IOException e) {
-            log.log(Level.SEVERE, null, e);
+            LOG.log(Level.SEVERE, null, e);
         }
     }
 
