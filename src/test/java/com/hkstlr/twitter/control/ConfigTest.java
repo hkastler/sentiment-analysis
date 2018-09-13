@@ -12,8 +12,7 @@
  * limitations under the License.
  * 
  */
-package com.hkstlr.sentiment.control;
-
+package com.hkstlr.twitter.control;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -23,7 +22,6 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.hkstlr.twitter.control.Config;
 
 /**
  *
