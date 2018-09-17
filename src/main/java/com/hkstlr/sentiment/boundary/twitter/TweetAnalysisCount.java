@@ -49,16 +49,18 @@ public class TweetAnalysisCount {
         Config config = new Config();
         Twitter twitter = new TwitterClient().getTwitter(config.getProps());
 
-        String queryTerms = "chicago scooters ";
+        String queryTerms = "chicago pizza ";
 
         if (args.length > 0) {
             queryTerms = Arrays.toString(args);
         }
 
         queryTerms += " +exclude:retweets";
+        
 
         Query query = new Query(queryTerms);
         query.setCount(100);
+        
 
         QueryResult tweets = twitter.search(query);
 

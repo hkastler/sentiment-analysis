@@ -25,12 +25,16 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import opennlp.tools.doccat.BagOfWordsFeatureGenerator;
 import opennlp.tools.doccat.DoccatFactory;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.doccat.DocumentSample;
 import opennlp.tools.doccat.DocumentSampleStream;
+import opennlp.tools.doccat.FeatureGenerator;
+import opennlp.tools.doccat.NGramFeatureGenerator;
 import opennlp.tools.util.InputStreamFactory;
+import opennlp.tools.util.InvalidFormatException;
 import opennlp.tools.util.MarkableFileInputStreamFactory;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
@@ -40,6 +44,9 @@ public class SentimentAnalyzer {
 
     private DoccatModel model;
     private DocumentCategorizerME doccat;
+    private int minNgramSize = 2;
+    private int maxNgramSize = 3;
+    private DoccatFactory doccatFactory;
     private String trainingDataFile;
     static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
 
@@ -54,6 +61,17 @@ public class SentimentAnalyzer {
     }
 
     private void init() {
+    	try {
+			doccatFactory = new DoccatFactory(
+				        new FeatureGenerator[]{
+				            new BagOfWordsFeatureGenerator(),
+				            new NGramFeatureGenerator(minNgramSize, maxNgramSize)
+				        }
+				    );
+		} catch (InvalidFormatException e) {
+			doccatFactory = new DoccatFactory();
+			LOG.log(Level.SEVERE, "", e);
+		}
         trainModel();
 
     }
@@ -82,7 +100,8 @@ public class SentimentAnalyzer {
             try {
 
                 tdata = new MarkableFileInputStreamFactory(
-                        Paths.get("src", "main", "resources", "twitter_sentiment_training_data.train").toFile());
+                        Paths.get("src", "main", "resources", 
+                        		"twitter_sentiment_training_data.train").toFile());
 
             } catch (FileNotFoundException e) {
                 LOG.log(Level.SEVERE, null, e);
@@ -105,8 +124,8 @@ public class SentimentAnalyzer {
             params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
             params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
 
-            model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, params,
-                    new DoccatFactory());
+            model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, 
+            		params, doccatFactory);
             doccat = new DocumentCategorizerME(model);
 
         } catch (IOException e) {
@@ -116,7 +135,7 @@ public class SentimentAnalyzer {
 
     public double[] getCategorize(String str) {
 
-        return doccat.categorize(opennlp.tools.tokenize.WhitespaceTokenizer.INSTANCE.tokenize(str));
+        return doccat.categorize(opennlp.tools.tokenize.SimpleTokenizer.INSTANCE.tokenize(str));
     }
 
     public String getBestCategory(String str) {
