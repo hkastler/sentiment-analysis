@@ -13,66 +13,95 @@
  * 
  */
 package com.hkstlr.twitter.control;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
-
 
 /**
  *
  * @author henry.kastler
  */
 public class ConfigTest {
-    
-    Config cut;
-    
-    public ConfigTest() {
-    }
 
-    
-    @Before
-    public void setUp() {
-        
-       cut = new Config();
-       
-    }
+	Config cut = new Config();
+	Config cutWithPath = new Config(Paths.get("src", "test", "resources", "app.properties") );
+	Config cutWithPathstring = new Config("src/test/resources/app.properties");
+	Config cutWithDevNull = new Config("/dev/null/foo.properties");
+	Config[] cuts = new Config[4];
+	
+	public ConfigTest() {
+	}
 
-    /**
-     * Test of init method, of class Config.
-     */
-    @Test
-    public void testInit() {
-        cut.init();
-        System.out.println("props.size:" + cut.getProps().size());
-        String oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", "not in props");
-        System.out.println(oAuthTest);
-        assertFalse(oAuthTest.equals("not in props"));
-        //assertTrue(oAuthTest.equals(""));
-    }
+	@Before
+	public void setUp() {
+		
+		cuts[0] = cut;
+		cuts[1] = cutWithPath;
+		cuts[2] = cutWithPathstring;
+		cuts[3] = cutWithDevNull;
+	}
 
-    /**
-     * Test of getProps method, of class Config.
-     */
-    @Test
-    public void testGetProps() {
-         assertNotNull(cut.getProps());
-    }
-    
-    
-    /**
-     * Test of init method, of class Config.
-     */
-    @Test
-    public void testLoadPropsCustom() {
-        cut = new Config(Paths.get("src", "test", "resources", "app.properties"));
-        System.out.println("props.size:" + cut.getProps().size());
-        String oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", "not in props");
-        assertTrue(oAuthTest.equals("test"));
-        //assertTrue(oAuthTest.equals(""));
-    }
+	/**
+	 * Test of init method, of class Config.
+	 */
+	@Test
+	public void testInit() {
+		System.out.println("testInit()");
+		
+		Arrays.stream(cuts).forEach(cut -> {
+			String oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", "");
+			assertFalse(oAuthTest.isEmpty());			
+		});
+		
+		String oAuthTest = cuts[2].getProps().getProperty("oAuthConsumerKey", "not in props");
+		assertEquals("testoAuthConsumerKey", oAuthTest);
+
+	}
+
+	/**
+	 * Test of getProps method, of class Config.
+	 */
+	@Test
+	public void testGetProps() {
+		System.out.println("testGetProps()");
+		//assertNotNull(cut.getProps());
+		Arrays.stream(cuts).forEach(c -> {
+			cut = c;
+			expectedProps();
+			
+		});
+		
+	}
+
+	public void expectedProps() {
+		int expectedNumProps = 4;
+		assertEquals(expectedNumProps, cut.getProps().size());
+	}
+
+	/**
+	 * Test of init method, of class Config.
+	 */
+	@Test
+	public void testLoadPropsCustom() {
+
+		String oAuthTest = cutWithPath.getProps().getProperty("oAuthConsumerKey", "not in props");
+		String expectedStr = "testoAuthConsumerKey";
+		assertEquals(expectedStr, oAuthTest);
+
+		oAuthTest = cutWithPathstring.getProps().getProperty("oAuthConsumerKey", "not in props");
+		expectedStr = "testoAuthConsumerKey";
+		assertEquals(expectedStr, oAuthTest);
+
+		cut = new Config("src/main/resources/app.properties");
+		expectedProps();
+		oAuthTest = cut.getProps().getProperty("oAuthConsumerKey", expectedStr);
+		assertFalse(expectedStr.equals(oAuthTest));
+
+	}
 }

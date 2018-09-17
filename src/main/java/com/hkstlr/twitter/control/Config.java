@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,52 +30,59 @@ public class Config {
 
 	private Properties props = new Properties();
 	private Logger log = Logger.getLogger(this.getClass().getName());
+	private String configFile = "/etc/config/twitter_sentiment_app_properties";
 
 	public Config() {
-		super();
+		checkSystemConfig();
 		init();
 	}
 
 	public Config(Path filepath) {
-		super();
-		try {
-			loadPropsCustom(filepath);
-		} catch (Exception e) {
-			init();
-			log.log(Level.SEVERE, "filepath error", e);
-		}
+		
+		this.configFile = filepath.toString();
+		init();
+	}
+	public Config(String pathstring) {
+		
+		this.configFile = pathstring;
+		init();
 	}
 
 	public Config(Properties props) {
-		super();
+		
 		this.props = props;
 	}
 
-	private void loadPropsCustom(Path filepath) throws FileNotFoundException, IOException {
-
-		props.load(new FileInputStream(filepath.toFile()));
-
+	private void checkSystemConfig() {
+		String systemPropsKey = "com.hkstlr.twitter.control.Config";
+		Optional<String> systemProps = Optional.ofNullable(System.getProperty(systemPropsKey));
+		configFile = systemProps.orElse(configFile);
+		
 	}
 
 	void init() {
-
+				
 		try {
 
 			InputStream is = null;
-			is = new FileInputStream(new File("/etc/config/twitter_sentiment_app_properties"));
+			is = new FileInputStream(new File(configFile));
 			props.load(is);
 			is.close();
 		} catch (FileNotFoundException ne) {
 			try {
 				Path appPropsPath = Paths.get("src", "main", "resources", "app.properties");
-				props.load(new FileInputStream(appPropsPath.toFile()));
+				this.configFile = appPropsPath.toString();
+				InputStream is = new FileInputStream(new File(configFile));
+				props.load(is);
+				is.close();
+				
 			} catch (IOException e) {
 				log.log(Level.SEVERE, null, e);
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, null, e);
 		}
-
+		
 	}
 
 	public Properties getProps() {
