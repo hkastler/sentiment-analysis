@@ -48,6 +48,7 @@ public class SentimentAnalyzer {
     private int maxNgramSize = 3;
     private DoccatFactory doccatFactory;
     private String trainingDataFile;
+    
     static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
 
     public SentimentAnalyzer() {
@@ -61,6 +62,7 @@ public class SentimentAnalyzer {
     }
 
     private void init() {
+    	
     	try {
 			doccatFactory = new DoccatFactory(
 				        new FeatureGenerator[]{
@@ -126,13 +128,14 @@ public class SentimentAnalyzer {
 
             model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, 
             		params, doccatFactory);
+                      
             doccat = new DocumentCategorizerME(model);
 
         } catch (IOException e) {
             LOG.log(Level.SEVERE, null, e);
         }
     }
-
+    
     public double[] getCategorize(String str) {
 
         return doccat.categorize(opennlp.tools.tokenize.SimpleTokenizer.INSTANCE.tokenize(str));
