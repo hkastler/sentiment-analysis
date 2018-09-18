@@ -27,26 +27,29 @@ import twitter4j.TwitterException;
  * see also https://github.com/technobium/opennlp-categorizer
  * @author henry.kastler
  */
-public class TweetAnalysisCount {
+public class TweetAnalysisMain {
 
-	private static final Logger LOG = Logger.getLogger(TweetAnalysisCount.class.getName());
+	private static final Logger LOG = Logger.getLogger(TweetAnalysisMain.class.getName());
     private static final Level LOG_LEVEL = Level.INFO;
 
     public static void main(String[] args) throws IOException, TwitterException {
     	
     	TweetAnalyzer ta = new TweetAnalyzer();
 
-    	String queryTerms = "chicago pizza";
+    	String queryTerms = "chicago mayor rahm";
     	
 
         if (args.length > 0) {
             queryTerms = Arrays.toString(args);
         }
         
-        String saResult = (String) ta.getSAAnalysis(queryTerms);
+        Object[] saResultObj = (Object[]) ta.getSAAnalysis(queryTerms);
+        String saResult = (String) saResultObj[0];
+        String probResults = (String) saResultObj[1];
 
         LOG.log(LOG_LEVEL, "{0}", new Object[]{saResult});
-
+        LOG.log(LOG_LEVEL, "{0}", new Object[]{probResults});
+        
     }
     
     
