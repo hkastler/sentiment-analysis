@@ -16,7 +16,10 @@
  */
 package com.hkstlr.sentiment.control;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -42,147 +45,191 @@ import opennlp.tools.util.TrainingParameters;
 
 public class SentimentAnalyzer {
 
-    private DoccatModel model;
-    private DocumentCategorizerME doccat;
-    private int minNgramSize = 2;
-    private int maxNgramSize = 3;
-    private DoccatFactory doccatFactory;
-    private String trainingDataFile;
-    
-    static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
+	private DoccatModel model;
+	private DocumentCategorizerME doccat;
+	private int minNgramSize = 1;
+	private int maxNgramSize = 4;
+	private DoccatFactory doccatFactory;
+	private String trainingDataFile;
+	private String modelFile = "/etc/config/sa_model.bin";
 
-    public SentimentAnalyzer() {
-        super();
-        init();
-    }
+	static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
 
-    public SentimentAnalyzer(String trainingDataFile) {
-        this.trainingDataFile = trainingDataFile;
-        init();
-    }
+	public SentimentAnalyzer() {
+		super();
+		init();
+	}
 
-    private void init() {
-    	
-    	try {
-			doccatFactory = new DoccatFactory(
-				        new FeatureGenerator[]{
-				            new BagOfWordsFeatureGenerator(),
-				            new NGramFeatureGenerator(minNgramSize, maxNgramSize)
-				        }
-				    );
+	public SentimentAnalyzer(String trainingDataFile,
+			String modelFile) {
+		this.trainingDataFile = trainingDataFile;
+		this.modelFile = modelFile;
+		init();
+	}
+
+	private void init() {
+		Optional<String> oModelFile = Optional.ofNullable(modelFile);
+		if (new File(oModelFile.orElse("")).exists()) {
+			loadModelFromFile();
+		} else {
+
+			trainModel();
+			if(oModelFile.isPresent() && !oModelFile.get().isEmpty()) {
+				saveModelToFile();
+			}
+			
+		}
+		
+	}
+
+	private DoccatFactory getDoccatFactory() {
+
+		if (null == doccatFactory) {
+			setDoccatFactory();
+		}
+
+		return doccatFactory;
+
+	}
+
+	private void setDoccatFactory() {
+		try {
+			doccatFactory = new DoccatFactory(new FeatureGenerator[] { new BagOfWordsFeatureGenerator(),
+					new NGramFeatureGenerator(minNgramSize, maxNgramSize) });
 		} catch (InvalidFormatException e) {
 			doccatFactory = new DoccatFactory();
 			LOG.log(Level.SEVERE, "", e);
 		}
-        trainModel();
+	}
 
-    }
+	public InputStreamFactory getTrainingData() {
 
-    public InputStreamFactory getTrainingData() {
+		InputStreamFactory tdata = null;
+		Optional<String> tdataCustomFile = Optional.ofNullable(trainingDataFile);
+		if (tdataCustomFile.isPresent() && !tdataCustomFile.get().isEmpty()) {
+			try {
+				tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get()).toFile());
 
-        InputStreamFactory tdata = null;
-        Optional<String> tdataCustomFile = Optional.ofNullable(trainingDataFile);
-        if (tdataCustomFile.isPresent() && !tdataCustomFile.get().isEmpty()) {
-            try {
-                tdata = new MarkableFileInputStreamFactory(Paths.get(tdataCustomFile.get()).toFile());
+			} catch (FileNotFoundException e) {
+				LOG.log(Level.SEVERE, null, e);
+			}
+			return tdata;
+		}
 
-            } catch (FileNotFoundException e) {
-                LOG.log(Level.SEVERE, null, e);
-            }
-            return tdata;
-        }
+		try {
 
-        try {
+			tdata = new MarkableFileInputStreamFactory(
+					Paths.get("/etc/config/twitter_sentiment_training_data.train").toFile());
 
-            tdata = new MarkableFileInputStreamFactory(
-                    Paths.get("/etc/config/twitter_sentiment_training_data.train").toFile());
+		} catch (FileNotFoundException ne) {
 
-        } catch (FileNotFoundException ne) {
+			try {
 
-            try {
+				tdata = new MarkableFileInputStreamFactory(
+						Paths.get("src", "main", "resources", "twitter_sentiment_training_data.train").toFile());
 
-                tdata = new MarkableFileInputStreamFactory(
-                        Paths.get("src", "main", "resources", 
-                        		"twitter_sentiment_training_data.train").toFile());
+			} catch (FileNotFoundException e) {
+				LOG.log(Level.SEVERE, null, e);
+			}
+		} catch (Exception e) {
 
-            } catch (FileNotFoundException e) {
-                LOG.log(Level.SEVERE, null, e);
-            }
-        } catch (Exception e) {
+			LOG.log(Level.SEVERE, null, e);
+		}
+		return tdata;
+	}
 
-            LOG.log(Level.SEVERE, null, e);
-        }
-        return tdata;
-    }
+	public void trainModel() {
 
-    public void trainModel() {
+		try {
 
-        try {
+			ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), StandardCharsets.UTF_8);
+			ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
 
-            ObjectStream<String> lineStream = new PlainTextByLineStream(getTrainingData(), StandardCharsets.UTF_8);
-            ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
+			TrainingParameters params = new TrainingParameters();
+			params.put(TrainingParameters.ITERATIONS_PARAM, 1000 + "");
+			params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
 
-            TrainingParameters params = new TrainingParameters();
-            params.put(TrainingParameters.ITERATIONS_PARAM, 100 + "");
-            params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
+			model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, params, getDoccatFactory());
 
-            model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, 
-            		params, doccatFactory);
-                      
-            doccat = new DocumentCategorizerME(model);
+			doccat = new DocumentCategorizerME(model);
 
-        } catch (IOException e) {
-            LOG.log(Level.SEVERE, null, e);
-        }
-    }
-    
-    public double[] getCategorize(String str) {
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, null, e);
+		}
+	}
 
-        return doccat.categorize(opennlp.tools.tokenize.SimpleTokenizer.INSTANCE.tokenize(str));
-    }
+	private void saveModelToFile() {
 
-    public String getBestCategory(String str) {
+		BufferedOutputStream modelOut;
+		try {
+			modelOut = new BufferedOutputStream(new FileOutputStream(modelFile));
+			model.serialize(modelOut);
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "", e);
+		}
 
-        return doccat.getBestCategory(getCategorize(str));
-    }
+	}
 
-    public Object[] getCategorizeAndBestCategory(String str) {
-        Object[] returnObj = new Object[2];
+	private void loadModelFromFile() {
 
-        returnObj[0] = getCategorize(str);
-        returnObj[1] = doccat.getBestCategory((double[]) returnObj[0]);
+		try {
 
-        return returnObj;
-    }
+			model = new DoccatModel(Paths.get(modelFile));
+			doccat = new DocumentCategorizerME(model);
 
-    public DoccatModel getModel() {
-        return model;
-    }
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "", e);
 
-    public void setModel(DoccatModel model) {
-        this.model = model;
-    }
+		}
+	}
 
-    public DocumentCategorizerME getDoccat() {
-        return doccat;
-    }
+	public double[] getCategorize(String str) {
 
-    public void setDoccat(DocumentCategorizerME doccat) {
-        this.doccat = doccat;
-    }
+		return doccat.categorize(opennlp.tools.tokenize.SimpleTokenizer.INSTANCE.tokenize(str));
+	}
 
-    /**
-     * @return the trainingDataFile
-     */
-    public String getTrainingDataFile() {
-        return trainingDataFile;
-    }
+	public String getBestCategory(String str) {
 
-    /**
-     * @param trainingDataFile the trainingDataFile to set
-     */
-    public void setTrainingDataFile(String trainingDataFile) {
-        this.trainingDataFile = trainingDataFile;
-    }
+		return doccat.getBestCategory(getCategorize(str));
+	}
+
+	public Object[] getCategorizeAndBestCategory(String str) {
+		Object[] returnObj = new Object[2];
+
+		returnObj[0] = getCategorize(str);
+		returnObj[1] = doccat.getBestCategory((double[]) returnObj[0]);
+
+		return returnObj;
+	}
+
+	public DoccatModel getModel() {
+		return model;
+	}
+
+	public void setModel(DoccatModel model) {
+		this.model = model;
+	}
+
+	public DocumentCategorizerME getDoccat() {
+		return doccat;
+	}
+
+	public void setDoccat(DocumentCategorizerME doccat) {
+		this.doccat = doccat;
+	}
+
+	/**
+	 * @return the trainingDataFile
+	 */
+	public String getTrainingDataFile() {
+		return trainingDataFile;
+	}
+
+	/**
+	 * @param trainingDataFile the trainingDataFile to set
+	 */
+	public void setTrainingDataFile(String trainingDataFile) {
+		this.trainingDataFile = trainingDataFile;
+	}
 
 }

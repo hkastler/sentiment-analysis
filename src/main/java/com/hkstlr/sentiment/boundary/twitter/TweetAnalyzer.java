@@ -39,7 +39,8 @@ public class TweetAnalyzer {
 	
 	void init() {
 		
-		sa = new SentimentAnalyzer();		
+		sa = new SentimentAnalyzer("/etc/config/twitter_sentiment_training_data.train",
+				"/etc/config/twitter_sa_model.bin");		
 		twitter = new TwitterClient().getTwitter(new Config().getProps());
 		
 	}
@@ -68,12 +69,13 @@ public class TweetAnalyzer {
 			Object[] outcomeAndtresult = this.sa.getCategorizeAndBestCategory(tweet.getText());
 			double[] outcome = (double[]) outcomeAndtresult[0];
 			tresult = (String) outcomeAndtresult[1];
-			if ("1".equals(tresult)) {
+			
+			if ("positive".equals(tresult)) {
 				positive++;
 			} else {
 				negative++;
 			}
-			LOG.log(LOG_LEVEL, msgTemplate, new Object[] { "1".equals(tresult) ? "POSITIVE" : "NEGATIVE",
+			LOG.log(LOG_LEVEL, msgTemplate, new Object[] { tresult,
 					Arrays.toString(outcome), tweet.getText() });
 		}
 

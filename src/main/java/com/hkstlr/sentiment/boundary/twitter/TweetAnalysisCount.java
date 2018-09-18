@@ -29,16 +29,14 @@ import twitter4j.TwitterException;
  */
 public class TweetAnalysisCount {
 
-    
-
-    private static final Logger LOG = Logger.getLogger(TweetAnalysisCount.class.getName());
+	private static final Logger LOG = Logger.getLogger(TweetAnalysisCount.class.getName());
     private static final Level LOG_LEVEL = Level.INFO;
 
     public static void main(String[] args) throws IOException, TwitterException {
     	
     	TweetAnalyzer ta = new TweetAnalyzer();
 
-    	String queryTerms = "chicago scooters ";
+    	String queryTerms = "chicago pizza";
     	
 
         if (args.length > 0) {
