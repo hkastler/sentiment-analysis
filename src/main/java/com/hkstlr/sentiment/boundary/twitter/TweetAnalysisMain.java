@@ -36,7 +36,7 @@ public class TweetAnalysisMain {
     	
     	TweetAnalyzer ta = new TweetAnalyzer();
 
-    	String queryTerms = "chicago mayor rahm";
+    	String queryTerms = "chicago pizza";
     	
 
         if (args.length > 0) {
