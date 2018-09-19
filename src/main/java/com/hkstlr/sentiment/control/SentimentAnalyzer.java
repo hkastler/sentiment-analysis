@@ -49,9 +49,11 @@ public class SentimentAnalyzer {
 	private DocumentCategorizerME doccat;
 	private int minNgramSize = 1;
 	private int maxNgramSize = 4;
+	private int iterations = 100;
+	private int cutoff = 0;
 	private DoccatFactory doccatFactory;
 	private String trainingDataFile;
-	private String modelFile = "/etc/config/sa_model.bin";
+	private String modelFile;
 
 	static final Logger LOG = Logger.getLogger(SentimentAnalyzer.class.getName());
 
@@ -146,8 +148,8 @@ public class SentimentAnalyzer {
 			ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
 
 			TrainingParameters params = new TrainingParameters();
-			params.put(TrainingParameters.ITERATIONS_PARAM, 1000 + "");
-			params.put(TrainingParameters.CUTOFF_PARAM, 0 + "");
+			params.put(TrainingParameters.ITERATIONS_PARAM, iterations + "");
+			params.put(TrainingParameters.CUTOFF_PARAM, cutoff + "");
 
 			model = DocumentCategorizerME.train(Locale.ENGLISH.getLanguage(), sampleStream, params, getDoccatFactory());
 
@@ -164,6 +166,7 @@ public class SentimentAnalyzer {
 		try {
 			modelOut = new BufferedOutputStream(new FileOutputStream(modelFile));
 			model.serialize(modelOut);
+			modelOut.close();
 		} catch (IOException e) {
 			LOG.log(Level.SEVERE, "", e);
 		}
