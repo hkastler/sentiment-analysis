@@ -52,7 +52,13 @@ public class SentimentAnalyzerTest {
 
 	@Before
 	public void setUp() {
-		cut = new SentimentAnalyzer();
+		Path testTrainFilepath = Paths.get("src", "test", "resources", 
+				"test_twitter_sentiment_training_data.train");
+		String tempModelFilePath = folder.getRoot().getAbsolutePath()
+				+ File.separator + "testGetTrainingDataFile.bin";
+		
+		cut = new SentimentAnalyzer(testTrainFilepath.toString(), 
+				tempModelFilePath);
 		
 	}
 
@@ -131,7 +137,23 @@ public class SentimentAnalyzerTest {
 	@Test
 	public void testGetTrainingDataFile() {
 		System.out.println("getTrainingDataFile");
-
+		
+		Path testPath = Paths.get("src", "test", "resources", 
+				"test_twitter_sentiment_training_data.train");
+		
+		String result = cut.getTrainingDataFile();
+		assertEquals(testPath.toString(), result);
+		assertNotNull(cut.getModel());
+		
+	}
+	
+	/**
+	 * Test of getTrainingDataFile method, of class SentimentAnalyzer.
+	 */
+	@Test
+	public void testGetTrainingDataFileEmptyConstructor() {
+		System.out.println("getTrainingDataFile");
+		cut = new SentimentAnalyzer();
 		String result = cut.getTrainingDataFile();
 		assertNull(result);
 
@@ -144,8 +166,8 @@ public class SentimentAnalyzerTest {
 		result = cut.getTrainingDataFile();
 		assertEquals(testPath.toString(), result);
 		
+		
 	}
-	
 	
 	
 	
